@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulatore Stipendio Netto · Farmacista 2025</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f4f8;
+    color: #1e293b;
+    min-height: 100vh;
+  }
+  header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    color: white;
+    padding: 24px 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.02em; }
+  header p  { font-size: 0.85rem; opacity: 0.75; margin-top: 4px; }
+
+  .container {
+    max-width: 1100px;
+    margin: 32px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .panel { background: white; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+  .panel-title {
+    padding: 14px 20px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: white;
+  }
+  .panel-title.blue  { background: #1e3a5f; }
+  .panel-title.green { background: #15803d; }
+  .panel-title.red   { background: #991b1b; }
+  .panel-title.slate { background: #334155; }
+  .panel-title.amber { background: #92400e; }
+
+  .panel-body { padding: 20px; }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-bottom: 4px;
+    font-weight: 500;
+    flex-wrap: wrap;
+  }
+  .field label .tag { color: #2563eb; font-size: 0.73rem; }
+  .field input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #1e293b;
+    background: #fffbeb;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .field input:focus { border-color: #2563eb; background: #fff; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin: 18px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  /* ---- Tooltip ---- */
+  .iBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    background: #cbd5e1;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 800;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .iBtn:hover { background: #2563eb; }
+  .iBtn .tip {
+    display: none;
+    position: absolute;
+    left: 20px;
+    top: -6px;
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 10px 13px;
+    border-radius: 9px;
+    font-size: 0.74rem;
+    line-height: 1.55;
+    width: 230px;
+    z-index: 200;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    font-weight: 400;
+    pointer-events: none;
+  }
+  .iBtn.open .tip,
+  .iBtn:hover .tip { display: block; }
+
+  /* Result cards */
+  .results-grid { display: grid; gap: 12px; }
+  .result-card {
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .result-card .label { font-size: 0.82rem; color: #475569; font-weight: 500; }
+  .result-card .value { font-size: 1.05rem; font-weight: 700; }
+  .result-card.neutral  { background: #f8fafc; border: 1px solid #e2e8f0; }
+  .result-card.positive { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .result-card .value.green { color: #15803d; }
+  .result-card.negative { background: #fef2f2; border: 1px solid #fecaca; }
+  .result-card .value.red   { color: #dc2626; }
+  .result-card.highlight {
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    border: none;
+    padding: 18px 20px;
+    border-radius: 12px;
+  }
+  .result-card.highlight .label { color: rgba(255,255,255,0.75); font-size: 0.85rem; }
+  .result-card.highlight .value { color: #fff; font-size: 1.4rem; }
+
+  .divider { border: none; border-top: 1px solid #e2e8f0; margin: 16px 0; }
+
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px dashed #f1f5f9;
+    font-size: 0.83rem;
+  }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-row .key { color: #64748b; }
+  .breakdown-row .val { font-weight: 600; color: #1e293b; }
+  .breakdown-row .val.minus { color: #dc2626; }
+  .breakdown-row .val.plus  { color: #15803d; }
+
+  .note {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 750px) {
+    .container { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Simulatore Stipendio Netto · Farmacista 2025</h1>
+  <p>Calcolo su 12 mensilità · CCNL Farmacisti dipendenti · Renault Captur diesel</p>
+</header>
+
+<div class="container">
+
+  <!-- ====== INPUT ====== -->
+  <div>
+
+    <!-- Retribuzione -->
+    <div class="panel" style="margin-bottom:24px">
+      <div class="panel-title blue">Retribuzione</div>
+      <div class="panel-body">
+
+        <div class="field">
+          <label>RAL lorda annua (€) <span class="iBtn" onclick="toggle(this)">i<span class="tip">Retribuzione Annua Lorda — il totale del tuo stipendio prima di tasse e contributi. È il numero scritto nel contratto di lavoro. Include tutte le mensilità (13ª e 14ª se presenti).</span></span></label>
+          <input type="number" id="ral" value="30000" oninput="delete document.getElementById('val_ora').dataset.manualOverride;calc()">
+        </div>
+        <div class="field">
+          <label>Mensilità <span class="iBtn" onclick="toggle(this)">i<span class="tip">La RAL è sempre il totale annuo. Con 13 o 14 mensilità, il netto mensile ordinario è più basso ma ricevi mesi aggiuntivi (tredicesima a dicembre, quattordicesima a giugno). La tassazione annua è identica — cambia solo la distribuzione mensile.</span></span></label>
+          <div style="display:flex;gap:8px">
+            <label style="flex:1;display:flex;align-items:center;gap:6px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;cursor:pointer;font-size:0.9rem;font-weight:600;color:#1e293b">
+              <input type="radio" name="mens" value="12" checked onchange="calc()" style="width:auto;background:none;border:none;padding:0"> 12
+            </label>
+            <label style="flex:1;display:flex;align-items:center;gap:6px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;cursor:pointer;font-size:0.9rem;font-weight:600;color:#1e293b">
+              <input type="radio" name="mens" value="13" onchange="calc()" style="width:auto;background:none;border:none;padding:0"> 13 <span style="font-size:0.7rem;color:#64748b">(+13ª)</span>
+            </label>
+            <label style="flex:1;display:flex;align-items:center;gap:6px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;cursor:pointer;font-size:0.9rem;font-weight:600;color:#1e293b">
+              <input type="radio" name="mens" value="14" onchange="calc()" style="width:auto;background:none;border:none;padding:0"> 14 <span style="font-size:0.7rem;color:#64748b">(+13ª+14ª)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Welfare aziendale annuo (€) <span class="tag">— non tassato</span> <span class="iBtn" onclick="toggle(this)">i<span class="tip">Credito su piattaforme (Edenred, Jointly, ecc.) per salute, sport, istruzione. Non soggetto a IRPEF né contributi fino a €1.000/anno (2025). Viene aggiunto direttamente al netto.</span></span></label>
+          <input type="number" id="welfare" value="0" oninput="calc()">
+        </div>
+
+        <div class="section-label">Buoni pasto</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Valore unitario (€/giorno) <span class="iBtn" onclick="toggle(this)">i<span class="tip">Valore di ogni buono pasto. Se elettronici sono esenti da tasse fino a €8/giorno — la quota eccedente entra nell'imponibile IRPEF.</span></span></label>
+            <input type="number" id="bp_val" value="8" step="0.5" oninput="calc()">
+          </div>
+          <div class="field">
+            <label>Giorni lavorativi/anno <span class="iBtn" onclick="toggle(this)">i<span class="tip">Giorni effettivamente lavorati nell'anno. Per un full-time standard sono ~220 (52 sett. × 5 gg − ferie − festività).</span></span></label>
+            <input type="number" id="bp_giorni" value="220" oninput="delete document.getElementById('val_ora').dataset.manualOverride;calc()">
+          </div>
+        </div>
+
+        <div class="section-label">Bonus e premi</div>
+        <div class="field">
+          <label>Bonus/premi tassabili (€/anno) <span class="iBtn" onclick="toggle(this)">i<span class="tip">Premi aziendali, incentivi, 13ª o 14ª se previste. Si sommano alla RAL nell'imponibile IRPEF. I premi di risultato contrattualizzati possono beneficiare dell'imposta sostitutiva al 5% (fino a €3.000, reddito &lt;€80.000) — verifica con il datore.</span></span></label>
+          <input type="number" id="bonus" value="0" oninput="calc()">
+        </div>
+        <div class="field">
+          <label>Provvigioni medie annue (€) <span class="iBtn" onclick="toggle(this)">i<span class="tip">Media annua delle provvigioni percepite (es. su vendita di prodotti, parafarmaco, campagne promozionali). Sono reddito da lavoro dipendente e vengono tassate con IRPEF ordinaria, esattamente come la RAL. Inserisci una stima media annua — è normale che varino mese per mese.</span></span></label>
+          <input type="number" id="proviggioni" value="0" oninput="calc()">
+        </div>
+        <div class="field">
+          <label>Extra non tassati — gift card, premi gara (€/anno) <span class="iBtn" onclick="toggle(this)">i<span class="tip">Gift card, premi per contest, campagne promozionali. Esenti da IRPEF e contributi fino a €258,23/anno complessivi (franchigia fringe benefit). La parte eccedente diventa imponibile. Inserisci il valore lordo — il simulatore scorpora la quota esente.</span></span></label>
+          <input type="number" id="extra" value="0" oninput="calc()">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Fisco -->
+    <div class="panel" style="margin-bottom:24px">
+      <div class="panel-title slate">Fisco (modificabili)</div>
+      <div class="panel-body">
+        <div class="field-row">
+          <div class="field">
+            <label>Addizionale regionale (%) <span class="iBtn" onclick="toggle(this)">i<span class="tip">Imposta regionale sul reddito. Varia per regione: es. Piemonte 1.62%, Lombardia 1.23%, Lazio 1.73%. Media nazionale preimpostata.</span></span></label>
+            <input type="number" id="add_reg" value="1.23" step="0.01" oninput="calc()">
+          </div>
+          <div class="field">
+            <label>Addizionale comunale (%) <span class="iBtn" onclick="toggle(this)">i<span class="tip">Imposta del comune di residenza sul reddito. Tipicamente tra 0% e 0.8%. Verifica sul sito del tuo comune.</span></span></label>
+            <input type="number" id="add_com" value="0.50" step="0.01" oninput="calc()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pendolarismo -->
+    <div class="panel">
+      <div class="panel-title red">Pendolarismo</div>
+      <div class="panel-body">
+        <div class="field-row">
+          <div class="field">
+            <label>Km andata+ritorno/giorno <span class="iBtn" onclick="toggle(this)">i<span class="tip">Chilometri totali percorsi ogni giorno lavorativo (andata + ritorno). Influisce sul costo auto annuo.</span></span></label>
+            <input type="number" id="km_gg" value="30" oninput="calc()">
+          </div>
+          <div class="field">
+            <label>Giorni lavorativi/anno <span class="iBtn" onclick="toggle(this)">i<span class="tip">Giorni in cui usi l'auto per andare al lavoro. Solitamente uguale ai giorni lavorativi retribuiti (~220).</span></span></label>
+            <input type="number" id="pend_giorni" value="220" oninput="calc()">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Costo/km auto (€) <span class="tag">— Captur diesel</span> <span class="iBtn" onclick="toggle(this)">i<span class="tip">Costo reale per km percorso: carburante, gomme, tagliandi, usura meccanica, quota assicurazione. Fonte: tabelle ACI 2024 per Renault Captur 1.5 dCi. Modificabile.</span></span></label>
+            <input type="number" id="costo_km" value="0.42" step="0.01" oninput="calc()">
+          </div>
+          <div class="field">
+            <label>Minuti A/R al giorno <span class="iBtn" onclick="toggle(this)">i<span class="tip">Tempo totale di viaggio al giorno (andata + ritorno). Viene usato per calcolare le ore perse e il loro valore economico.</span></span></label>
+            <input type="number" id="min_gg" value="40" oninput="calc()">
+          </div>
+        </div>
+        <div class="field">
+          <label>Valore ora personale (€/h) <span class="tag">— calcolato dalla RAL</span> <span class="iBtn" onclick="toggle(this)">i<span class="tip">Quanto vale un'ora del tuo tempo, derivata dalla RAL (RAL ÷ ore lavorate/anno). Le ore in auto sono ore di lavoro extra non retribuite — questo ne quantifica il costo. Puoi sovrascriverlo manualmente; si resetta se cambi RAL o giorni.</span></span></label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" id="val_ora" step="0.01" oninput="document.getElementById('val_ora').dataset.manualOverride='1';calc()" style="flex:1">
+            <div id="val_ora_badge" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:8px 12px;font-size:0.8rem;color:#1e40af;white-space:nowrap;min-width:90px;text-align:center"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ====== OUTPUT ====== -->
+  <div>
+
+    <div class="panel" style="margin-bottom:24px">
+      <div class="panel-title green">Riepilogo annuo</div>
+      <div class="panel-body">
+        <div class="breakdown-row"><span class="key">RAL lorda</span><span class="val" id="o_ral">—</span></div>
+        <div class="breakdown-row"><span class="key">+ Bonus/premi tassabili</span><span class="val plus" id="o_bonus">—</span></div>
+        <div class="breakdown-row"><span class="key">+ Provvigioni (media annua)</span><span class="val plus" id="o_proviggioni">—</span></div>
+        <div class="breakdown-row"><span class="key">Contributi INPS (9.19%)</span><span class="val minus" id="o_inps">—</span></div>
+        <div class="breakdown-row"><span class="key">Imponibile IRPEF</span><span class="val" id="o_irpef_base">—</span></div>
+        <div class="breakdown-row"><span class="key">IRPEF lorda</span><span class="val minus" id="o_irpef_lorda">—</span></div>
+        <div class="breakdown-row"><span class="key">Detrazione lav. dipendente</span><span class="val plus" id="o_detrazione">—</span></div>
+        <div class="breakdown-row"><span class="key">IRPEF netta</span><span class="val minus" id="o_irpef_netta">—</span></div>
+        <div class="breakdown-row"><span class="key">Addizionali (reg.+com.)</span><span class="val minus" id="o_add">—</span></div>
+        <hr class="divider">
+        <div class="breakdown-row"><span class="key" style="font-weight:700">Netto da stipendio</span><span class="val" id="o_netto_stipendio">—</span></div>
+        <div class="breakdown-row"><span class="key">+ Welfare (non tassato)</span><span class="val plus" id="o_welfare">—</span></div>
+        <div class="breakdown-row"><span class="key">+ Buoni pasto esenti</span><span class="val plus" id="o_bp">—</span></div>
+        <div class="breakdown-row"><span class="key">+ Extra non tassati (esenti fino a €258)</span><span class="val plus" id="o_extra">—</span></div>
+        <hr class="divider">
+        <div class="breakdown-row"><span class="key" style="font-weight:700;font-size:0.9rem">= Netto totale annuo</span><span class="val" style="font-size:1.05rem" id="o_netto_tot">—</span></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:24px">
+      <div class="panel-title red">Costi pendolarismo annui</div>
+      <div class="panel-body">
+        <div class="breakdown-row"><span class="key">Km totali/anno</span><span class="val" id="o_km_tot">—</span></div>
+        <div class="breakdown-row"><span class="key">Costo auto</span><span class="val minus" id="o_costo_auto">—</span></div>
+        <div class="breakdown-row"><span class="key">Ore perse/anno</span><span class="val" id="o_ore_perse">—</span></div>
+        <div class="breakdown-row"><span class="key">Costo tempo</span><span class="val minus" id="o_costo_tempo">—</span></div>
+        <hr class="divider">
+        <div class="breakdown-row"><span class="key" style="font-weight:700">Totale costo pendolarismo</span><span class="val minus" id="o_pend_tot">—</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title blue">Bilancio mensile</div>
+      <div class="panel-body">
+        <div class="results-grid">
+          <div class="result-card positive">
+            <span class="label">Netto mensile (stipendio)</span>
+            <span class="value green" id="o_netto_men_stip">—</span>
+          </div>
+          <div class="result-card positive">
+            <span class="label">Welfare mensile</span>
+            <span class="value green" id="o_welfare_men">—</span>
+          </div>
+          <div class="result-card positive">
+            <span class="label">Buoni pasto mensili</span>
+            <span class="value green" id="o_bp_men">—</span>
+          </div>
+          <div class="result-card positive">
+            <span class="label">Bonus + extra mensili</span>
+            <span class="value green" id="o_extra_men">—</span>
+          </div>
+          <div class="result-card neutral">
+            <span class="label">Netto mensile totale</span>
+            <span class="value" id="o_netto_men_tot">—</span>
+          </div>
+          <div class="result-card negative">
+            <span class="label">Costo pendolarismo mensile</span>
+            <span class="value red" id="o_pend_men">—</span>
+          </div>
+          <div class="result-card highlight">
+            <span class="label" id="o_label_mensile">NETTO REALE MENSILE (su 12)</span>
+            <span class="value" id="o_netto_reale">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calcolatore inverso -->
+    <div class="panel" style="margin-top:24px">
+      <div class="panel-title amber">Che RAL devo chiedere?</div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Netto reale mensile desiderato (€) <span class="iBtn" onclick="toggle(this)">i<span class="tip">Inserisci il netto mensile che vuoi portare a casa, già al netto di tasse, contributi e costi di pendolarismo. Il simulatore calcola la RAL lorda da chiedere, tenendo conto di tutti i parametri inseriti sopra (welfare, BP, km, mensilità).</span></span></label>
+          <input type="number" id="target_netto" placeholder="es. 1800" oninput="calcInverso()">
+        </div>
+        <div id="inverso_result" style="display:none;margin-top:12px">
+          <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 16px">
+            <div style="font-size:0.75rem;color:#92400e;margin-bottom:4px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">RAL necessaria</div>
+            <div style="font-size:1.5rem;font-weight:800;color:#c2410c" id="inverso_ral">—</div>
+            <div style="font-size:0.77rem;color:#78716c;margin-top:6px;line-height:1.5" id="inverso_note">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const FRINGE_LIMIT = 258.23;
+
+function fmt(n) {
+  return '€ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+function fmtKm(n) { return Math.round(n).toLocaleString('it-IT') + ' km'; }
+function fmtOre(n) { return n.toFixed(1).replace('.', ',') + ' h'; }
+
+function calcIRPEF(base) {
+  if (base <= 0) return 0;
+  if (base <= 28000) return base * 0.23;
+  if (base <= 50000) return 28000 * 0.23 + (base - 28000) * 0.35;
+  return 28000 * 0.23 + 22000 * 0.35 + (base - 50000) * 0.43;
+}
+
+function calcDetrazione(reddito) {
+  if (reddito <= 0)     return 0;
+  if (reddito <= 15000) return 1955;
+  if (reddito <= 28000) return 1910 * (28000 - reddito) / 13000;
+  if (reddito <= 50000) return 1190 * (50000 - reddito) / 22000;
+  return 0;
+}
+
+function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function getMens() {
+  return parseInt(document.querySelector('input[name="mens"]:checked').value);
+}
+
+function toggle(el) { el.classList.toggle('open'); }
+document.addEventListener('click', e => {
+  if (!e.target.closest('.iBtn'))
+    document.querySelectorAll('.iBtn.open').forEach(b => b.classList.remove('open'));
+});
+
+// Calcola il netto reale mensile dato un certo RAL (con tutti gli altri parametri fissi)
+function nettoRealeFromRAL(ral) {
+  const welfare   = v('welfare');
+  const bp_val    = v('bp_val');
+  const bp_giorni = v('bp_giorni');
+  const bonus       = v('bonus');
+  const proviggioni = v('proviggioni');
+  const extra     = v('extra');
+  const add_reg   = v('add_reg') / 100;
+  const add_com   = v('add_com') / 100;
+  const km_gg     = v('km_gg');
+  const p_giorni  = v('pend_giorni');
+  const costo_km  = v('costo_km');
+  const min_gg    = v('min_gg');
+  const val_ora   = parseFloat(document.getElementById('val_ora').value) || (ral / (bp_giorni * 8));
+  const mens      = getMens();
+
+  const extra_esente    = Math.min(extra, FRINGE_LIMIT);
+  const extra_tassabile = Math.max(0, extra - FRINGE_LIMIT);
+  const base_lordo      = ral + bonus + proviggioni + extra_tassabile;
+  const inps            = base_lordo * 0.0919;
+  const irpef_base      = base_lordo - inps;
+  const irpef_netta     = Math.max(0, calcIRPEF(irpef_base) - calcDetrazione(irpef_base));
+  const addizionali     = irpef_base * (add_reg + add_com);
+  const netto_stipendio = base_lordo - inps - irpef_netta - addizionali;
+  const bp_esenti       = bp_giorni * Math.min(bp_val, 8);
+  const netto_totale    = netto_stipendio + welfare + bp_esenti + extra_esente;
+
+  const costo_auto  = km_gg * p_giorni * costo_km;
+  const costo_tempo = (min_gg * p_giorni / 60) * val_ora;
+  const pend_men    = (costo_auto + costo_tempo) / 12;
+
+  return netto_totale / mens - pend_men;
+}
+
+function calcInverso() {
+  const target = parseFloat(document.getElementById('target_netto').value);
+  const res    = document.getElementById('inverso_result');
+  if (!target || target <= 0) { res.style.display = 'none'; return; }
+
+  // Binary search su RAL tra 10.000 e 500.000
+  let lo = 10000, hi = 500000;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    nettoRealeFromRAL(mid) < target ? lo = mid : hi = mid;
+  }
+  const ral_needed = Math.ceil((lo + hi) / 2);
+  const mens = getMens();
+
+  res.style.display = 'block';
+  document.getElementById('inverso_ral').textContent = fmt(ral_needed) + '/anno';
+  document.getElementById('inverso_note').textContent =
+    `Con questa RAL su ${mens} mensilità ottieni circa ${fmt(target)}/mese netto reale (dopo pendolarismo). ` +
+    `Verifica con i parametri attuali prima di trattare.`;
+}
+
+function calc() {
+  const ral       = v('ral');
+  const welfare   = v('welfare');
+  const bp_val    = v('bp_val');
+  const bp_giorni = v('bp_giorni');
+  const bonus     = v('bonus');
+  const extra     = v('extra');
+  const add_reg   = v('add_reg') / 100;
+  const add_com   = v('add_com') / 100;
+  const km_gg     = v('km_gg');
+  const p_giorni  = v('pend_giorni');
+  const costo_km  = v('costo_km');
+  const min_gg    = v('min_gg');
+  const mens      = getMens();
+
+  // Valore ora dalla RAL
+  const ore_anno     = bp_giorni * 8;
+  const val_ora_auto = ore_anno > 0 ? ral / ore_anno : 0;
+  const inputValOra  = document.getElementById('val_ora');
+  if (!inputValOra.dataset.manualOverride) inputValOra.value = val_ora_auto.toFixed(2);
+  const val_ora = parseFloat(inputValOra.value) || val_ora_auto;
+  document.getElementById('val_ora_badge').textContent = '≈ €' + val_ora_auto.toFixed(2) + '/h RAL';
+
+  const proviggioni = v('proviggioni');
+
+  const extra_esente    = Math.min(extra, FRINGE_LIMIT);
+  const extra_tassabile = Math.max(0, extra - FRINGE_LIMIT);
+  const base_lordo      = ral + bonus + proviggioni + extra_tassabile;
+
+  const inps        = base_lordo * 0.0919;
+  const irpef_base  = base_lordo - inps;
+  const irpef_lorda = calcIRPEF(irpef_base);
+  const detrazione  = calcDetrazione(irpef_base);
+  const irpef_netta = Math.max(0, irpef_lorda - detrazione);
+  const addizionali = irpef_base * (add_reg + add_com);
+  const tot_imposte = irpef_netta + addizionali;
+
+  const netto_stipendio = base_lordo - inps - tot_imposte;
+  const bp_esenti       = bp_giorni * Math.min(bp_val, 8);
+  const netto_totale    = netto_stipendio + welfare + bp_esenti + extra_esente;
+
+  const km_tot      = km_gg * p_giorni;
+  const costo_auto  = km_tot * costo_km;
+  const ore_perse   = (min_gg * p_giorni) / 60;
+  const costo_tempo = ore_perse * val_ora;
+  const pend_tot    = costo_auto + costo_tempo;
+
+  // Mensile su n mensilità
+  const netto_men_stip = netto_stipendio / mens;
+  const welfare_men    = welfare / mens;
+  const bp_men         = bp_esenti / mens;
+  const extra_men      = (bonus + proviggioni + extra) / mens;
+  const netto_men_tot  = netto_totale / mens;
+  const pend_men       = pend_tot / 12;          // il pendolarismo è sempre /12 (mensile reale)
+  const netto_reale    = netto_men_tot - pend_men;
+
+  // OUTPUT
+  document.getElementById('o_ral').textContent             = fmt(ral);
+  document.getElementById('o_bonus').textContent           = bonus > 0 ? '+ ' + fmt(bonus) : fmt(0);
+  document.getElementById('o_proviggioni').textContent     = proviggioni > 0 ? '+ ' + fmt(proviggioni) : fmt(0);
+  document.getElementById('o_inps').textContent            = '− ' + fmt(inps);
+  document.getElementById('o_irpef_base').textContent      = fmt(irpef_base);
+  document.getElementById('o_irpef_lorda').textContent     = '− ' + fmt(irpef_lorda);
+  document.getElementById('o_detrazione').textContent      = '+ ' + fmt(detrazione);
+  document.getElementById('o_irpef_netta').textContent     = '− ' + fmt(irpef_netta);
+  document.getElementById('o_add').textContent             = '− ' + fmt(addizionali);
+  document.getElementById('o_netto_stipendio').textContent = fmt(netto_stipendio);
+  document.getElementById('o_welfare').textContent         = '+ ' + fmt(welfare);
+  document.getElementById('o_bp').textContent              = '+ ' + fmt(bp_esenti);
+  document.getElementById('o_extra').textContent           = extra > 0
+    ? `+ ${fmt(extra_esente)} esenti${extra_tassabile > 0 ? ' · ' + fmt(extra_tassabile) + ' tassati' : ''}`
+    : fmt(0);
+  document.getElementById('o_netto_tot').textContent       = fmt(netto_totale);
+
+  document.getElementById('o_km_tot').textContent          = fmtKm(km_tot);
+  document.getElementById('o_costo_auto').textContent      = '− ' + fmt(costo_auto);
+  document.getElementById('o_ore_perse').textContent       = fmtOre(ore_perse);
+  document.getElementById('o_costo_tempo').textContent     = '− ' + fmt(costo_tempo);
+  document.getElementById('o_pend_tot').textContent        = '− ' + fmt(pend_tot);
+
+  document.getElementById('o_netto_men_stip').textContent  = fmt(netto_men_stip);
+  document.getElementById('o_welfare_men').textContent     = fmt(welfare_men);
+  document.getElementById('o_bp_men').textContent          = fmt(bp_men);
+  document.getElementById('o_extra_men').textContent       = fmt(extra_men);
+  document.getElementById('o_netto_men_tot').textContent   = fmt(netto_men_tot);
+  document.getElementById('o_pend_men').textContent        = '− ' + fmt(pend_men);
+  document.getElementById('o_netto_reale').textContent     = fmt(netto_reale);
+  document.getElementById('o_label_mensile').textContent   = `NETTO REALE MENSILE (su ${mens})`;
+
+  // aggiorna anche il calcolatore inverso se c'è un target inserito
+  calcInverso();
+}
+
+calc();
+</script>
+</body>
+</html>
